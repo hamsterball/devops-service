@@ -11,7 +11,7 @@ define([
   'App',
   'views/item/LoadingView'
 
-], function ($, cardTemplate, serverTemplate, noServersTemplate, Backbone, Marionette, App, LoadingView) {
+], function($, cardTemplate, serverTemplate, noServersTemplate, Backbone, Marionette, App, LoadingView) {
 
   'use strict';
 
@@ -19,21 +19,21 @@ define([
 
     template: serverTemplate,
 
-    initialize: function () {
+    initialize: function() {
       this.on('reserved', this.reserved);
       this.on('unreserved', this.unreserved);
     },
 
     tagName: 'tr',
 
-    className: function () {
+    className: function() {
       var reservedBy = this.model.get('modal').reserved_by;
       if (!!reservedBy) {
         return "success"
       }
     },
 
-    templateHelpers: function () {
+    templateHelpers: function() {
       var aLevels = App.request('get:accessLevels');
       var l3 = aLevels.level3();
       var l2 = aLevels.level2();
@@ -45,11 +45,11 @@ define([
       }
     },
 
-    reserved: function () {
+    reserved: function() {
       this.$el.addClass('success');
     },
 
-    unreserved: function () {
+    unreserved: function() {
       this.$el.removeClass('success');
     },
 
@@ -62,12 +62,17 @@ define([
       "click #delete-server": "deleteServer"
     },
 
-    deployServer: function () {
+    deployServer: function() {
       var deployEnv = this.model.get('modal').deploy_env;
       var user = App.request('get:currentUser');
-      var canDeploy = this.model.get('project').checkUserPermissionsForEnv({user: user, deployEnv: deployEnv});
+      var canDeploy = this.model.get('project').checkUserPermissionsForEnv({
+        user: user,
+        deployEnv: deployEnv
+      });
       if (canDeploy) {
-        App.vent.trigger('server:deploy:start', {model: this.model});
+        App.vent.trigger('server:deploy:start', {
+          model: this.model
+        });
       } else {
         App.trigger('alert:show', {
           type: 'danger',
@@ -77,26 +82,36 @@ define([
       }
     },
 
-    reserveServer: function () {
+    reserveServer: function() {
       this.model.attachedView = this;
-      App.vent.trigger('server:reserve', {model: this.model});
+      App.vent.trigger('server:reserve', {
+        model: this.model
+      });
     },
 
-    unreserveServer: function () {
+    unreserveServer: function() {
       this.model.attachedView = this;
-      App.vent.trigger('server:unreserve', {model: this.model});
+      App.vent.trigger('server:unreserve', {
+        model: this.model
+      });
     },
 
-    pauseServer: function () {
-      App.vent.trigger('server:pause', {model: this.model});
+    pauseServer: function() {
+      App.vent.trigger('server:pause', {
+        model: this.model
+      });
     },
 
-    unpauseServer: function () {
-      App.vent.trigger('server:unpause', {model: this.model});
+    unpauseServer: function() {
+      App.vent.trigger('server:unpause', {
+        model: this.model
+      });
     },
 
-    deleteServer: function () {
-      App.vent.trigger('server:modal:delete', {model: this.model});
+    deleteServer: function() {
+      App.vent.trigger('server:modal:delete', {
+        model: this.model
+      });
     }
 
   });
@@ -106,7 +121,7 @@ define([
     tagName: 'tr',
     template: noServersTemplate,
 
-    templateHelpers: function () {
+    templateHelpers: function() {
       return {
         accessLevels: App.request('get:accessLevels')
       }
@@ -143,13 +158,12 @@ define([
       testRegion: '#test-region'
     },
 
-    deployServer: function (e) {
-    },
+    deployServer: function(e) {},
 
     childView: ChildView,
     childViewContainer: '#servers-container',
 
-    initialize: function () {
+    initialize: function() {
       this.project = this.model.collection.project;
       this.model.set('project', this.project);
       var servers = this.model.get('project').getServersForEnv(this.model.get('identifier'));
@@ -159,40 +173,40 @@ define([
       this.listenTo(App, 'project:removeServer:' + this.project.get('id'), this.onRemoveServer);
     },
 
-    onRemoveServer: function (model) {
+    onRemoveServer: function(model) {
       this.collection.remove(model);
-      console.log(this.collection);
     },
 
-    templateHelpers: function () {
-      var names, links, safe_links;
-
-      names = this.model.get('users');
-      links = _.map(names, function (name) {
-        return "<a href='#' class='user-name'>" + name + "</a>";
-      });
-      safe_links = new Handlebars.SafeString(links.join(' '));
-
+    templateHelpers: function() {
+      var names = this.model.get('users');
       return {
-        usersWrapped: safe_links
+        users: names
       };
     },
 
-    bootstrapServer: function () {
-      App.vent.trigger('project:server:bootstrap', {model: this.model});
+    bootstrapServer: function() {
+      App.vent.trigger('project:server:bootstrap', {
+        model: this.model
+      });
     },
 
-    viewServers: function () {
-      App.vent.trigger('viewServers', {env: this.model});
+    viewServers: function() {
+      App.vent.trigger('viewServers', {
+        env: this.model
+      });
     },
 
-    deployEnv: function () {
-      console.log(this.model)
+    deployEnv: function() {
       var deployEnv = this.model.get('identifier');
       var user = App.request('get:currentUser');
-      var canDeploy = this.model.get('project').checkUserPermissionsForEnv({user: user, deployEnv: deployEnv});
+      var canDeploy = this.model.get('project').checkUserPermissionsForEnv({
+        user: user,
+        deployEnv: deployEnv
+      });
       if (canDeploy) {
-        App.vent.trigger('project:environment:deploy', {model: this.model});
+        App.vent.trigger('project:environment:deploy', {
+          model: this.model
+        });
       } else {
         App.trigger('alert:show', {
           type: 'danger',
@@ -202,18 +216,26 @@ define([
       }
     },
 
-    createServer: function () {
-      App.vent.trigger('requestCreateServer', {env: this.model, project: this.project});
+    createServer: function() {
+      App.vent.trigger('requestCreateServer', {
+        env: this.model,
+        project: this.project
+      });
     },
 
-    manageUsers: function () {
-      App.vent.trigger('manageEnvUsers', {env: this.model, project: this.project});
+    manageUsers: function() {
+      App.vent.trigger('manageEnvUsers', {
+        env: this.model,
+        project: this.project
+      });
     },
 
-    viewUser: function (e) {
+    viewUser: function(e) {
       e.preventDefault();
       var userName = $(e.target).text();
-      App.vent.trigger('user:info', {userName: userName});
+      App.vent.trigger('user:info', {
+        userName: userName
+      });
     }
 
   });
