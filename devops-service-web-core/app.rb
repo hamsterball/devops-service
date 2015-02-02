@@ -11,6 +11,7 @@ Bundler.require :default, ENV['RACK_ENV'].to_sym
 require_relative 'lib/env/app.rb'
 
 
+
 require_relative 'lib/env/routes/auth'
 require_relative 'lib/env/routes/extra'
 
@@ -66,9 +67,19 @@ class DevopsServiceWeb < Sinatra::Base
   end
 
   helpers do
+
     def logger
       request.logger
     end
+
+    def authenticated?
+      if session[:username]
+        return true
+      else
+        return false
+      end
+    end
+
   end
 
   def host
@@ -77,6 +88,12 @@ class DevopsServiceWeb < Sinatra::Base
 
   def config
     CONFIG
+  end
+
+  before /^(?!\/(login))/ do
+    unless authenticated?
+      redirect '/login'
+    end
   end
 
   def access_levels
@@ -129,21 +146,17 @@ class DevopsServiceWeb < Sinatra::Base
   end
 
   def api_call(path, query: nil, data: nil, method: :get, creds: session_creds)
-		puts session_creds.inspect
     url = "#{host}/v2.0#{path}"
     raise unless [:get, :post, :delete, :put].include?(method)
     request_params = (method == :get) ? query : data
 		json_headers["REMOTE_USER"] = session_creds[:username]
 		json_headers["EMAIL"] = session_creds[:email]
-		puts json_headers.inspect
     submit(creds) do |http|
       http.send(method, url, request_params, json_headers)
     end
   end
 
   def submit creds
-    puts "submitting..."
-    puts creds
     http = HTTPClient.new
     http.set_auth(host, creds[:username], creds[:password])
     res = yield http
