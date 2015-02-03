@@ -2,19 +2,28 @@ define([
 
   'App'
 
-], function(DSW) {
+], function (DSW) {
 
   'use strict';
 
   DSW.module('Modules.ManageEnvironments', {
 
-    moduleClass: DSW.moduleClasses.Common,
+    moduleClass: DSW.moduleClasses.ProjectFormContainer,
 
-    define: function(module, app) {
+    define: function (module, app) {
+
+      module.verbose = true;
+
+      var envModule = DSW.module('Modules.ManageEnvironments.Env');
+      var depsInitializer = envModule.getEnvDepsInitializer();
+      var depsFetcher = envModule.getEnvDepsFetcher();
+      module.setDepsInitializer(depsInitializer);
+      module.setDepsFetcher(depsFetcher);
+      module.trigger('deps:init:start', this);
 
       module.startWithParent = false;
       module.opts = {};
-      module.showDialog = function(projectName) {
+      module.showDialog = function (projectName) {
         module.opts.projectName = projectName;
 
         var aLevels = app.request('get:accessLevels');
@@ -25,7 +34,7 @@ define([
             message: 'Sorry, you\'re not authorized for this operation.'
           });
           app.trigger('workspace:nav:close');
-          require(['modules/ProjectsList'], function(ProjectsList) {
+          require(['modules/ProjectsList'], function (ProjectsList) {
             ProjectsList.start();
             ProjectsList.showProjectsList();
           });
@@ -52,7 +61,7 @@ define([
           }
         ]));
 
-        require(['views/item/LoadingView'], function(LoadingView) {
+        require(['views/item/LoadingView'], function (LoadingView) {
           var loadingView = new LoadingView({
             title: "Loading Manage Environments...",
             message: "Please wait, loading environments data..."
@@ -60,27 +69,11 @@ define([
           app.trigger('workspace:show', loadingView)
         });
 
-        module.fetchDependencies();
-
-      };
-
-      module.getCollectionsToFetch = function(collectionsToFetch, data, colls) {
-
-        var promise = app.request('fetch', collectionsToFetch);
-
-        promise.done(function() {
-          module.log('fetching dependencies... Done.');
-          data.deps = colls;
-          require(['views/modals/ManageEnvironments'], function(ManageEnvironmentsModal) {
-            var view = new ManageEnvironmentsModal(data);
-            app.trigger('workspace:show', view);
-          })
-        });
-
       };
 
     }
-  });
+  })
+  ;
 
   return DSW.Modules.ManageEnvironments;
 

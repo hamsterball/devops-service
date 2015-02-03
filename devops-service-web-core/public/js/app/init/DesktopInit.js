@@ -55,8 +55,6 @@ require([
   });
 
   EnvMainModule.start();
-
-
   Breadcrumbs.start();
 
   App.settings = {};

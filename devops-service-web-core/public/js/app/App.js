@@ -12,15 +12,91 @@ define([
 
   var App = new Backbone.Marionette.Application({
 
-    moduleClasses: {
-      Common: Marionette.Module.extend({
-        log: function(message, obj) {
-     	  message = message || "";  
-	  obj = obj || "";  
-	  console.info("[" + this.moduleName + "]: " + message, obj);  
-        } 
-      }),
-    },
+    moduleClasses: function () {
+
+      var Common = Marionette.Module.extend({
+        log: function (message, obj) {
+          if (!this.verbose) return;
+          message = message || "";
+          obj = obj || "";
+          console.info("[" + this.moduleName + "]: " + message, obj);
+        }
+      });
+
+      var ProjectFormContainer = Common.extend({
+
+        test: function (arg) {
+          var str = " !!! " + arg;
+          this.log(str);
+        },
+
+        initialize: function () {
+          this.on("deps:init:start", this.onDepsInitStart);
+          this.on("deps:init:done", this.onDepsInitDone);
+          this.on("deps:fetch:start", this.onDepsFetchStart);
+          this.on("deps:fetch:done", this.onDepsFetchDone);
+        },
+
+        setDepsInitializer: function (f) {
+          this.depsInitializer = f;
+        },
+
+        setDepsFetcher: function (fetcher) {
+          this.depsFetcher = fetcher;
+        },
+
+        setDependencies: function (deps) {
+          this.dependencies = deps;
+        },
+
+        getDependencies: function () {
+          return this.dependencies;
+        },
+
+        initDependencies: function () {
+          if (!this.depsInitializer) {
+            this.log("started empty deps initializer");
+            this.trigger("deps:init:done");
+            return;
+          }
+          this.depsInitializer(this);
+        },
+
+        fetchDependencies: function () {
+          if (!this.depsFetcher) {
+            this.log("started empty deps fetcher");
+            this.trigger("deps:fetch:done");
+            return;
+          }
+          this.depsFetcher(this);
+        },
+
+        onDepsInitStart: function () {
+          this.log('initializing dependencies...');
+          this.initDependencies();
+        },
+
+        onDepsInitDone: function () {
+          this.log('initializing dependencies... Done.')
+          this.trigger('deps:fetch:start', this);
+        },
+
+        onDepsFetchStart: function () {
+          this.log('fetching dependencies...');
+          this.fetchDependencies();
+        },
+
+        onDepsFetchDone: function () {
+          this.log('fetching dependencies... Done.');
+        }
+
+      });
+
+      return {
+        Common: Common,
+        ProjectFormContainer: ProjectFormContainer
+      }
+    }(),
 
     log: function (type, message) {
       if (type === 'err') {
@@ -29,11 +105,11 @@ define([
     },
 
     dlog: function (params, o) {
-        console.info(params, o);
+      console.info(params, o);
     }
   });
 
-  App.reqres.setHandler('get:todayDate', function() {
+  App.reqres.setHandler('get:todayDate', function () {
     var date = new Date();
     var dd = ('0' + date.getDate()).slice(-2);
     var mm = ('0' + (date.getMonth() + 1)).slice(-2);
@@ -43,7 +119,7 @@ define([
     return dateString;
   });
 
-  App.reqres.setHandler('get:dateIncrement', function(date) {
+  App.reqres.setHandler('get:dateIncrement', function (date) {
     var current = date.getDate();
     date.setDate(current + 1);
     console.log('get:dateIncrement', current, date);
